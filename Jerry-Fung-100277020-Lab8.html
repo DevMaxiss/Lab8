@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8>
+<title></title>
+</head>
+<style>
+div.center{
+text-align: center;
+}
+</style>
+
+<body>
+
+
+<h1 align = "center">CPSC1045 Lab 8 - Concentration</h1>
+<hr>
+<table align = "center">
+<tr>
+	<td>
+	<td>Row</td>
+	<td>
+	<td>Column</td>
+	<td>
+</tr>
+<tr></tr>
+<tr>
+	<td> Card1: </td>
+	<td><input id = "card1Row" type="number" min="1" max="6" value = 1>
+	<td>
+	<td><input id = "card1Col" type="number" min="1" max="6" value = 1></td>
+	<td>
+	<td>Tries:</td>
+	<td id = "numAttempts"> 0 </td>
+</tr>
+<tr></tr>
+<tr>
+	<td> Card2: </td>
+	<td><input id = "card2Row" type="number" min="1" max="6" value = 1>
+	<td>
+	<td><input id = "card2Col" type="number" min="1" max="6" value = 1></td>
+	<td>
+	<td>Score:</td>
+	<td id = "playerScore"> 0 </td>
+
+</tr>
+<tr></tr>
+<tr>
+	<td></td>
+	<td><button id = "checkButton" onclick = "checkCards(arr1, arr2, face)" type = "button" disabled >Check Cards</button>
+</tr>
+
+</table>
+<br>
+
+<div class = "center">
+<canvas id = "meincanvas" width = "500" height = "500" style = "border: 2px solid black"></canvas>
+</div>
+
+<script> 
+var canvas = document.getElementById("meincanvas");
+var ctx = canvas.getContext("2d");
+
+ctx.font = "30px courier";
+ctx.translate(canvas.width/2, canvas.height/2);
+
+var cards = ["A","A","B","B","C","C",
+			 "D","D","E","E","F","F",
+			 "G","G","H","H","I","I",
+			 "J","J","K","K","L","L",
+			 "M","M","N","N","O","O",
+			 "P","P","Q","Q","R","R",]; // The list of cards.	
+		 
+var faceDown = ["*","*","*","*","*","*",
+				"*","*","*","*","*","*",
+				"*","*","*","*","*","*",
+				"*","*","*","*","*","*",
+				"*","*","*","*","*","*",
+				"*","*","*","*","*","*"]; //The list of facedown cards.
+		
+var shuffled = shuffleCards(cards);
+var faceDownData = createGameArea(faceDown, 6);
+
+var arr1 = createGameArea(shuffled, 6), arr2 = createGameArea(faceDown, 6);
+var face = createGameArea(faceDown, 6);
+
+drawGameBoard(faceDownData, 6);
+
+var score = document.getElementById("playerScore"), tries = document.getElementById("numAttempts");
+var checkButton = document.getElementById("checkButton");
+
+checkButton.disabled = false; //Make the button available when the game is not yet finished.
+
+function checkCards(a1,a2,faceval){ //The game funcitonality.
+	
+	var row1 = document.getElementById("card1Row").value - 1, col1 = document.getElementById("card1Col").value - 1;
+	var row2 = document.getElementById("card2Row").value - 1, col2 = document.getElementById("card2Col").value - 1;
+
+	if(((row1 || col1) || (row2 || col2)) == -1){ // Error Checking
+	alert("Invalid entry, one of your inputs is not a number. Try again.");
+}
+	
+	else if(((row1 || col1) || (row2 || col2)) < -1){ // Error Checking
+		alert("Invalid entry, one of your inputs is below the specified range (1-6). Try again.");
+	}
+	
+	else if(((row1 || col1) || (row2 || col2)) > 6){ // Error Checking
+		alert("Invalid entry, one of your inputs is above the specified range (1-6). Try again.");
+	}
+	
+	else{
+		ctx.clearRect(-canvas.width/2,-canvas.height/2,canvas.width, canvas.height);
+
+		a2[row1][col1]= a1[row1][col1];
+		a2[row2][col2]= a1[row2][col2];
+		
+		drawGameBoard(a2, 6);
+		
+		if(row1 == row2 && col1 == col2){
+			a2[row1][col1] = "*";
+			a2[row2][col2] = "*";
+		
+		}
+		
+		else if(a1[row1][col1] != a2[row2][col2]){//Resets the cards when they are not the same.
+			a2[row1][col1] = "*";
+			a2[row2][col2] = "*";
+		}
+		
+		else if(a1[row1][col1] == a2[row2][col2] && (face[row1][col1] != " " && face[row2][col2] != " ")){ 
+		//checks if the cards are the same AND awards points if the face down cards aren't already blanked out
+		//Thus prevents point farming, but also punishing the player by adding to their attempts.
+			a2[row1][col1] = " ";
+			a2[row2][col2] = " ";
+			
+			faceval[row1][col1] = " ";
+			faceval[row2][col2] = " ";
+			
+			(score.innerHTML ++);
+			(score.innerHTML ++);
+		}
+		
+		setTimeout(function(){
+			ctx.clearRect(-canvas.width/2,-canvas.height/2,canvas.width, canvas.height);
+			drawGameBoard(faceval, 6);
+
+		},3000);
+		
+		
+		if(score.innerText == "4"){ //disables the button, and changes the button text alerting the player they have won.
+			checkButton.disabled = true;
+			checkButton.innerHTML = "A winner is you.";
+		}
+
+		tries.innerHTML++;
+		
+		return faceval;
+	}
+}
+
+
+function drawGameBoard(data, arraySize){ //function that draws the gameboard.
+	
+	var col = -canvas.height/5, row = -canvas.width/4;
+	
+	for(var i = 1; i <=6; i++){ //Draw top row numbers
+		ctx.fillText(i,row, col-45);
+		row+=45;
+	}
+	
+	row = row = -canvas.width/4; //Reset row number.
+	
+	for(var i = 1; i <=6; i++){ //Draw left column numbers
+		ctx.fillText(i,row-45, col);
+		col+=45;
+	}
+	col = -canvas.height/5 //Reset col number.
+	
+	for(var x = 0; x < arraySize; x++){ //draw card space.
+		for(var y = 0; y < arraySize; y++){
+			ctx.fillText(data[x][y],row, col); 
+			row+= 45;
+		}
+		col +=45;
+		row = -canvas.width/4;
+	}
+
+}
+
+function createGameArea(data, arraySize){//Function that initializes the game table.
+	var gameBoard = [];
+	var d = 0;
+	for(var x = 0; x < arraySize; x++){
+		gameBoard[x] = new Array(arraySize);
+		for(var y = 0; y < arraySize; y++){	
+			gameBoard[x][y] = (data[d]);
+			d++;
+		}
+	}
+return gameBoard;
+}
+
+function shuffleCards(data){//Function that shuffles the cards.
+	
+    for (var i = data.length - 1; i > 0; i--) {
+        var j = (Math.random() * (i + 1)).toFixed(0);
+        var temp = data[i];
+        data[i] = data[j];
+        data[j] = temp;
+    }
+	return data;
+}
+
+function showAnswers(data){//This function is for development purposes only.
+
+	for(var x = 0; x < data.length;x++){
+		for(var y = 0; y < data[x].length; y++){
+			document.write(data[x][y] + " ");
+
+		}
+		document.write("<br>");
+	}
+}
+
+
+</script>
+
+</body>
+</html>
